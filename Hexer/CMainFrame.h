@@ -7,11 +7,7 @@
 #pragma once
 #include "HexCtrl.h"
 #include <afxcontrolbars.h>
-#include <chrono>
-#include <memory>
-#include <string>
 #include <unordered_map>
-#include <vector>
 
 import DlgDataInfo;
 import DlgLogger;

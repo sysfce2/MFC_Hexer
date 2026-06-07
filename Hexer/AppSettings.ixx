@@ -1,10 +1,10 @@
-module;
 /*******************************************************************************
 * Copyright © 2023-present Jovibor https://github.com/jovibor/                 *
 * Hexer is a Hexadecimal Editor for Windows platform.                          *
 * Official git repository: https://github.com/jovibor/Hexer/                   *
 * This software is available under "The Hexer License", see the LICENSE file.  *
 *******************************************************************************/
+module;
 #include <SDKDDKVer.h>
 #include "resource.h"
 #include "sqlite3.h"
@@ -274,6 +274,7 @@ void CAppSettingsRFL::UpdateMenuIcons() {
 		if (idx >= m_dwRFLSize) //Adding not more than m_dwRFLSize.
 			break;
 
+		using enum ut::EOpenMode;
 		HBITMAP hBmp { };
 		switch (vec.eOpenMode) {
 		case OPEN_FILE:
@@ -550,7 +551,7 @@ void CAppSettings::LoadSettings(std::wstring_view wsvAppName)
 		return;
 
 	if (m_upSQLiteDB == nullptr) {
-		::CreateDirectoryW(ut::GetAppDataDir().data(), nullptr);
+		::CreateDirectoryW(ut::GetLocalAppDataDir().data(), nullptr);
 		m_upSQLiteDB = DBOpenDB(ut::GetSQLiteDBPath().data());
 		DBCreateTables(m_upSQLiteDB.get());
 	}

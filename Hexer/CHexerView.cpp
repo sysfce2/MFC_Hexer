@@ -5,13 +5,13 @@
 * This software is available under "The Hexer License", see the LICENSE file.  *
 *******************************************************************************/
 #include "stdafx.h"
+#include <format>
+#include "resource.h"
 #include "CHexerApp.h"
 #include "CMainFrame.h"
 #include "CChildFrame.h"
 #include "CHexerDoc.h"
 #include "CHexerView.h"
-#include "resource.h"
-#include <format>
 
 import Utility;
 
@@ -265,19 +265,19 @@ void CHexerView::OnDataAccessRWINPLACE()
 void CHexerView::OnDataIOMMAP()
 {
 	ChangeDataAccessMode({ 2 });
-	ChangeDataIOMode(DATA_MMAP);
+	ChangeDataIOMode(ut::EDataIOMode::DATA_MMAP);
 }
 
 void CHexerView::OnDataIOBuff()
 {
 	ChangeDataAccessMode({ 2 });
-	ChangeDataIOMode(DATA_IOBUFF);
+	ChangeDataIOMode(ut::EDataIOMode::DATA_IOBUFF);
 }
 
 void CHexerView::OnDataIOImmediate()
 {
 	ChangeDataAccessMode({ 2 });
-	ChangeDataIOMode(DATA_IOIMMEDIATE);
+	ChangeDataIOMode(ut::EDataIOMode::DATA_IOIMMEDIATE);
 }
 
 auto CHexerView::OnDPIChangedAfterParent(WPARAM /*wParam*/, LPARAM /*lParam*/)->LRESULT

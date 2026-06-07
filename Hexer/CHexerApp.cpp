@@ -5,6 +5,7 @@
 * This software is available under "The Hexer License", see the LICENSE file.  *
 *******************************************************************************/
 #include "stdafx.h"
+#include <format>
 #include "resource.h"
 #include "CHexerApp.h"
 #include "CMainFrame.h"
@@ -12,7 +13,6 @@
 #include "CHexerDoc.h"
 #include "CHexerView.h"
 #include <afxdialogex.h>
-#include <format>
 
 import DlgOpenDevice;
 import DlgOpenProcess;

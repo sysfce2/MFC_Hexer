@@ -5,12 +5,13 @@
 * This software is available under "The Hexer License", see the LICENSE file.  *
 *******************************************************************************/
 #include "stdafx.h"
+#include <cassert>
+#include <format>
 #include "resource.h"
 #include "CHexerApp.h"
 #include "CMainFrame.h"
 #include "CChildFrame.h"
 #include "CHexerDoc.h"
-#include <cassert>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

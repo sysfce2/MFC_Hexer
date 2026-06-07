@@ -217,7 +217,7 @@ export namespace ut {
 		return wstrDir;
 	}
 
-	[[nodiscard]] auto GetAppDataDir() -> const std::wstring& {
+	[[nodiscard]] auto GetLocalAppDataDir() -> const std::wstring& {
 		static const auto wstrADD = [] {
 			PWSTR pwsz { };
 			::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &pwsz);
@@ -230,7 +230,7 @@ export namespace ut {
 	}
 
 	[[nodiscard]] auto GetSQLiteDBPath() -> const std::wstring& {
-		static const auto wstrDB = GetAppDataDir() + L"\\" + GetAppName() + L".cfg";
+		static const auto wstrDB = GetLocalAppDataDir() + L"\\" + GetAppName() + L".cfg";
 		return wstrDB;
 	}
 

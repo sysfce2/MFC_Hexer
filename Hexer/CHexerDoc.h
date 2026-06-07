@@ -5,8 +5,6 @@
 * This software is available under "The Hexer License", see the LICENSE file.  *
 *******************************************************************************/
 #pragma once
-#include <cstddef>
-#include <string>
 #include "HexCtrl.h"
 
 import DataLoader;

@@ -555,7 +555,7 @@ void CDlgOpenPath::OnOK()
 export class CDlgOpenDevice final : public CDialogEx {
 public:
 	CDlgOpenDevice(CWnd* pParent = nullptr) : CDialogEx(IDD_OPENDEVICE, pParent) { }
-	INT_PTR DoModal(ut::EOpenMode eTab = OPEN_DRIVE);
+	INT_PTR DoModal(ut::EOpenMode eTab = ut::EOpenMode::OPEN_DRIVE);
 	[[nodiscard]] auto GetOpenData()const -> const std::vector<ut::DATAOPEN>&;
 private:
 	void DoDataExchange(CDataExchange* pDX)override;
@@ -639,6 +639,7 @@ BOOL CDlgOpenDevice::OnInitDialog()
 
 	GetWindowRect(m_rcWnd);
 
+	using enum ut::EOpenMode;
 	m_tabMain.InsertItem(TCIF_TEXT | TCIF_PARAM, 0, L"Physical Drives", 0, std::to_underlying(OPEN_DRIVE));
 	m_tabMain.InsertItem(TCIF_TEXT | TCIF_PARAM, 1, L"Volumes", 0, std::to_underlying(OPEN_VOLUME));
 	m_tabMain.InsertItem(TCIF_TEXT | TCIF_PARAM, 2, L"Path", 0, std::to_underlying(OPEN_PATH));
@@ -701,6 +702,7 @@ void CDlgOpenDevice::OnOK()
 {
 	m_vecOpenData.clear();
 
+	using enum ut::EOpenMode;
 	switch (m_eCurTab) {
 	case OPEN_DRIVE:
 		m_vecOpenData = m_pDlgDrives->GetOpenData();
@@ -744,6 +746,7 @@ void CDlgOpenDevice::SetCurrentTab(ut::EOpenMode eTab)
 	m_eCurTab = eTab;
 	m_tabMain.SetCurSel(TabNameToID(eTab));
 
+	using enum ut::EOpenMode;
 	bool fEnableOK { };
 	switch (eTab) {
 	case OPEN_DRIVE:
