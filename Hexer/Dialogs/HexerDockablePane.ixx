@@ -193,9 +193,10 @@ private:
 	BOOL PreTranslateMessage(MSG* pMsg)override;
 	DECLARE_MESSAGE_MAP();
 private:
-	HWND m_hWndNested { };       //Currently nested window.
-	HWND m_hWndParentOrig { };   //Original parent of the m_hWndNested.
-	LONG_PTR m_llStylesOrig { }; //Original styles of the m_hWndNested.
+	HWND m_hWndNested { };         //Currently nested window.
+	HWND m_hWndParentOrig { };     //Original parent of the m_hWndNested.
+	LONG_PTR m_llStylesOrig { };   //Original styles of the m_hWndNested.
+	LONG_PTR m_llStylesExOrig { }; //Original extended styles of the m_hWndNested.
 };
 
 BEGIN_MESSAGE_MAP(CHexerDockablePane, CDockablePane)
@@ -212,17 +213,22 @@ void CHexerDockablePane::SetNestedHWND(HWND hWnd)
 
 	if (m_hWndNested != nullptr) {
 		::SetWindowLongPtrW(m_hWndNested, GWL_STYLE, m_llStylesOrig); //Restore original styles.
+		::SetWindowLongPtrW(m_hWndNested, GWL_EXSTYLE, m_llStylesExOrig); //Restore original extended styles.
 		::SetParent(m_hWndNested, m_hWndParentOrig); //Restore original parent.
 		::ShowWindow(m_hWndNested, SW_HIDE);
 	}
 
-	//We preserve all original styles. Then remove those responsible for border, caption, and resizability.
-	//Also, set the WS_CHILD style, otherwise weird things can happen with the parent, or the main window,
+	//We preserve all original styles and extended window styles.
+	//Then we remove those responsible for border, caption, and resizability.
+	//Also, we set WS_CHILD window style, otherwise weird things can happen with the parent, or the main window,
 	//especially when interacting with the Windows taskbar.
 	m_llStylesOrig = ::GetWindowLongPtrW(hWnd, GWL_STYLE);
-	const auto llStylesNew = m_llStylesOrig & ~(WS_BORDER | WS_DLGFRAME | WS_THICKFRAME | WS_POPUP) | WS_CHILD;
-	m_hWndParentOrig = ::SetParent(hWnd, m_hWnd);
+	const auto llStylesNew = m_llStylesOrig & (~(WS_BORDER | WS_DLGFRAME | WS_THICKFRAME | WS_POPUP) | WS_CHILD);
 	::SetWindowLongPtrW(hWnd, GWL_STYLE, llStylesNew);
+	m_llStylesExOrig = ::GetWindowLongPtrW(hWnd, GWL_EXSTYLE);
+	const auto llStylesExNew = m_llStylesExOrig & ~WS_EX_DLGMODALFRAME;
+	::SetWindowLongPtrW(hWnd, GWL_EXSTYLE, llStylesExNew);
+	m_hWndParentOrig = ::SetParent(hWnd, m_hWnd);
 	m_hWndNested = hWnd;
 	AdjustLayout();
 }
