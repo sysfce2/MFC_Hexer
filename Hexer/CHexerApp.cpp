@@ -450,13 +450,13 @@ void CHexerApp::OnFileOpenProcess()
 	}
 }
 
+void CHexerApp::OnFileRFL(UINT uID)
+{
+	OpenDocumentCustom(GetAppSettings().RFLGetDataFromMenuID(uID));
+}
+
 void CHexerApp::OnToolsSettings()
 {
 	CDlgSettings dlg;
 	dlg.DoModal(m_stAppSettings);
-}
-
-void CHexerApp::OnFileRFL(UINT uID)
-{
-	OpenDocumentCustom(GetAppSettings().RFLGetDataFromMenuID(uID));
 }

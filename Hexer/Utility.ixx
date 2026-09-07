@@ -206,8 +206,8 @@ export namespace ut {
 
 	[[nodiscard]] auto GetModulePath(HMODULE hMod = nullptr) -> std::wstring {
 		std::wstring wstrPath;
-		wstrPath.resize_and_overwrite(MAX_PATH, [hMod](wchar_t* pData, std::size_t szSize) {
-			return ::GetModuleFileNameW(hMod, pData, static_cast<DWORD>(szSize)); });
+		wstrPath.resize_and_overwrite(MAX_PATH, [hMod](wchar_t* pData, std::size_t uzSize) {
+			return ::GetModuleFileNameW(hMod, pData, static_cast<DWORD>(uzSize)); });
 		return wstrPath;
 	}
 
@@ -229,9 +229,9 @@ export namespace ut {
 		return wstrADD;
 	}
 
-	[[nodiscard]] auto GetSQLiteDBPath() -> const std::wstring& {
-		static const auto wstrDB = GetLocalAppDataDir() + L"\\" + GetAppName() + L".cfg";
-		return wstrDB;
+	[[nodiscard]] auto GetSQLiteDBPath(bool fIsPortable = false) -> std::wstring {
+		const auto wstrDBPath = (fIsPortable ? GetModuleDir() : GetLocalAppDataDir()) + L"\\" + GetAppName() + L".cfg";
+		return wstrDBPath;
 	}
 
 	[[nodiscard]] constexpr auto GetEHexWndFromPaneID(UINT uPaneID) -> std::optional<HEXCTRL::EHexWnd> {
