@@ -179,7 +179,7 @@ void CHexerView::HexCtrlLoadSavedTemplApplied()
 	const auto vecTemplApplied = theApp.GetAppSettings().GetSavedTemplApplied(GetDocument()->GetUniqueDocName());
 	const auto pTemplates = GetHexCtrl()->GetTemplates();
 	for (const auto& applied : vecTemplApplied) {
-		pTemplates->ApplyTemplate(applied.ullOffset, applied.wstrTemplateName);
+		pTemplates->ApplyTemplate(applied.wstrFilePath.data(), applied.u64Offset);
 	}
 }
 
@@ -376,8 +376,8 @@ void CHexerView::OnInitialUpdate()
 	pHex->SetUnprintableChar(HexSett.wchUnprintable);
 	pHex->SetHexCharsCase(HexSett.fHexCharsCaseUpper);
 
-	for (const auto& p : theApp.GetAppSettings().GetHexCtrlTemplates()) {
-		pHex->GetTemplates()->AddTemplate(*p);
+	for (const auto& wstr : theApp.GetAppSettings().GetHexCtrlTemplFiles()) {
+		pHex->GetTemplates()->AddTemplateFile(wstr.data());
 	}
 
 	HexCtrlSetData();

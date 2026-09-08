@@ -302,13 +302,8 @@ void CAppSettingsRFL::UpdateMenuIcons() {
 //CAppSettings.
 export class CAppSettings final {
 public:
-	using VecTemplates = std::vector<std::unique_ptr<HEXCTRL::HEXTEMPLATE>>;
-	using VecBkm = std::vector<HEXCTRL::HEXBKM>;
-	struct DBTEMPLAPPLIED {
-		ULONGLONG ullOffset { };
-		std::wstring wstrTemplateName;
-	};
-	using VecTemplApplied = std::vector<DBTEMPLAPPLIED>;
+	using VecHexTemplateFiles = std::vector<std::wstring>;
+	using VecHexBkm = std::vector<HEXCTRL::HEXBKM>;
 	using uptr_sqlite = std::unique_ptr < sqlite3, decltype([](sqlite3* pDB) {
 		auto res = sqlite3_close(pDB);
 		assert(res == SQLITE_OK); }) > ;
@@ -362,13 +357,13 @@ public:
 	~CAppSettings() = default;
 	[[nodiscard]] auto GetGeneralSettings() -> GENERALSETTINGS&;
 	[[nodiscard]] auto GetHexCtrlSettings() -> HEXCTRLSETTINGS&;
-	[[nodiscard]] auto GetHexCtrlTemplates()const -> const VecTemplates&;
+	[[nodiscard]] auto GetHexCtrlTemplFiles()const -> const VecHexTemplateFiles&;
 	[[nodiscard]] auto GetIconDataForCmd(UINT uCMD)const -> const ICONDATA*;
 	[[nodiscard]] auto GetLastOpenFiles()const -> VecDataOpen;
 	[[nodiscard]] auto GetPaneData(UINT uPaneID)const -> std::uint64_t;
 	[[nodiscard]] auto GetPaneStatus(UINT uPaneID)const -> PANESTATUS;
-	[[nodiscard]] auto GetSavedBkms(std::wstring_view wsvFileName)const -> VecBkm;
-	[[nodiscard]] auto GetSavedTemplApplied(std::wstring_view wsvFileName)const -> VecTemplApplied;
+	[[nodiscard]] auto GetSavedBkms(std::wstring_view wsvFileName)const -> VecHexBkm;
+	[[nodiscard]] auto GetSavedTemplApplied(std::wstring_view wsvFileName)const -> HEXCTRL::VecHexTemplatesApplied;
 	[[nodiscard]] bool IsRFLInitialized()const;
 	void LoadSettings(std::wstring_view wsvAppName);
 	void OnSettingsChanged();
@@ -383,7 +378,7 @@ public:
 	void SaveBkms(std::wstring_view wsvFileName, HEXCTRL::SpanHexBkm spnBkm);
 	void SaveLastOpenFiles(SpnDataOpen spnDataOpen);
 	void SaveSettings();
-	void SaveTemplApplied(std::wstring_view wsvFileName, HEXCTRL::SpanHexTemplApplied spnApplied);
+	void SaveTemplApplied(std::wstring_view wsvFileName, const HEXCTRL::VecHexTemplatesApplied& spnApplied);
 	void SetPaneData(UINT uPaneID, std::uint64_t ullData);
 	void SetPaneStatus(UINT uPaneID, bool fVisible, bool fActive);
 	[[nodiscard]] static auto GetGeneralDefs() -> const GENERALSETTINGS&;
@@ -400,14 +395,14 @@ private:
 	void ShowInWindowsContextMenu(bool fShow);
 	static void DBCreateTables(sqlite3* pDB);
 	[[nodiscard]] static auto DBGetFileIDByName(sqlite3* pDB, std::wstring_view wsvFileName) -> std::int64_t;
-	[[nodiscard]] static auto DBLoadBkmForFileID(sqlite3* pDB, std::int64_t i64FileID) -> VecBkm;
+	[[nodiscard]] static auto DBLoadBkmForFileID(sqlite3* pDB, std::int64_t i64FileID) -> VecHexBkm;
 	[[nodiscard]] static auto DBLoadLastOpenFiles(sqlite3* pDB) -> VecDataOpen;
-	[[nodiscard]] static auto DBLoadTemplApliedForFileID(sqlite3* pDB, std::int64_t i64FileID) -> VecTemplApplied;
+	[[nodiscard]] static auto DBLoadTemplApliedForFileID(sqlite3* pDB, std::int64_t i64FileID) -> HEXCTRL::VecHexTemplatesApplied;
 	[[nodiscard]] static auto DBOpenDB(const wchar_t* pwszPathDB) -> uptr_sqlite;
 	static void DBSaveBkmForFileID(sqlite3* pDB, std::int64_t i64FileID, HEXCTRL::SpanHexBkm spnHexBkm);
 	static void DBSaveHexCtrlSettings(sqlite3* pDB, const HEXCTRLSETTINGS& sett);
 	static void DBSaveLastOpenFiles(sqlite3* pDB, SpnDataOpen spnDataOpen);
-	static void DBSaveTemplAppliedForFileID(sqlite3* pDB, std::int64_t i64FileID, HEXCTRL::SpanHexTemplApplied spnApplied);
+	static void DBSaveTemplAppliedForFileID(sqlite3* pDB, std::int64_t i64FileID, const HEXCTRL::VecHexTemplatesApplied& vecApplied);
 	[[nodiscard]] static auto DWORD2PaneStatus(DWORD dw) -> PANESTATUS;
 	[[nodiscard]] static auto PaneStatus2DWORD(PANESTATUS ps) -> DWORD;
 private:
@@ -416,7 +411,7 @@ private:
 	PANESETTINGS m_stPaneSett;          //"Panes" settings data.
 	GENERALSETTINGS m_stGeneralSett;    //"General" settings data.
 	HEXCTRLSETTINGS m_stHexCtrlSett;    //"HexCtrl" settings data.
-	VecTemplates m_vecHexCtrlTemplates; //HexCtrl loaded templates.
+	VecHexTemplateFiles m_vecHexCtrlTemplFiles; //HexCtrl template files.
 	std::wstring m_wstrAppName;         //Application name for registry paths.
 	uptr_sqlite m_upSQLiteDB;           //SQLite database pointer.
 	bool m_fLoaded { false };           //LoadSettings has succeeded.
@@ -446,29 +441,24 @@ std::vector<CAppSettings::ICONDATA> CAppSettings::m_vecIconData {
 };
 
 
-auto CAppSettings::GetGeneralSettings()->GENERALSETTINGS&
-{
+auto CAppSettings::GetGeneralSettings()->GENERALSETTINGS& {
 	return m_stGeneralSett;
 }
 
-auto CAppSettings::GetHexCtrlSettings()->HEXCTRLSETTINGS&
-{
+auto CAppSettings::GetHexCtrlSettings()->HEXCTRLSETTINGS& {
 	return m_stHexCtrlSett;
 }
 
-auto CAppSettings::GetHexCtrlTemplates()const->const VecTemplates&
-{
-	return m_vecHexCtrlTemplates;
+auto CAppSettings::GetHexCtrlTemplFiles()const->const VecHexTemplateFiles& {
+	return m_vecHexCtrlTemplFiles;
 }
 
-auto CAppSettings::GetIconDataForCmd(UINT uCmd)const->const ICONDATA*
-{
+auto CAppSettings::GetIconDataForCmd(UINT uCmd)const->const ICONDATA* {
 	const auto it = std::ranges::find_if(m_vecIconData, [=](const ICONDATA& data) { return data.uIDCmd == uCmd; });
 	return it != std::ranges::end(m_vecIconData) ? &*it : nullptr;
 }
 
-auto CAppSettings::GetLastOpenFiles()const->VecDataOpen
-{
+auto CAppSettings::GetLastOpenFiles()const->VecDataOpen {
 	assert(m_fLoaded);
 	if (!m_fLoaded)
 		return { };
@@ -476,8 +466,7 @@ auto CAppSettings::GetLastOpenFiles()const->VecDataOpen
 	return DBLoadLastOpenFiles(GetSQLiteDB());
 }
 
-auto CAppSettings::GetPaneData(UINT uPaneID)const->std::uint64_t
-{
+auto CAppSettings::GetPaneData(UINT uPaneID)const->std::uint64_t {
 	assert(m_fLoaded);
 	if (!m_fLoaded)
 		return { };
@@ -520,7 +509,7 @@ auto CAppSettings::GetPaneStatus(UINT uPaneID)const->PANESTATUS
 	}
 }
 
-auto CAppSettings::GetSavedBkms(std::wstring_view wsvFileName)const->VecBkm
+auto CAppSettings::GetSavedBkms(std::wstring_view wsvFileName)const->VecHexBkm
 {
 	assert(m_fLoaded);
 	if (!m_fLoaded)
@@ -530,8 +519,7 @@ auto CAppSettings::GetSavedBkms(std::wstring_view wsvFileName)const->VecBkm
 	return DBLoadBkmForFileID(pDB, DBGetFileIDByName(pDB, wsvFileName));
 }
 
-auto CAppSettings::GetSavedTemplApplied(std::wstring_view wsvFileName)const->VecTemplApplied
-{
+auto CAppSettings::GetSavedTemplApplied(std::wstring_view wsvFileName)const->HEXCTRL::VecHexTemplatesApplied {
 	assert(m_fLoaded);
 	if (!m_fLoaded)
 		return { };
@@ -883,8 +871,7 @@ void CAppSettings::SaveSettings()
 	regHexCtrl.SetDWORDValue(L"HexCtrlClrScrollArrow", refClrs.clrScrollArrow);
 }
 
-void CAppSettings::SaveTemplApplied(std::wstring_view wsvFileName, HEXCTRL::SpanHexTemplApplied spnApplied)
-{
+void CAppSettings::SaveTemplApplied(std::wstring_view wsvFileName, const HEXCTRL::VecHexTemplatesApplied& spnApplied) {
 	const auto pDB = GetSQLiteDB();
 	const auto i64FileID = DBGetFileIDByName(pDB, wsvFileName);
 	DBSaveTemplAppliedForFileID(pDB, i64FileID, spnApplied);
@@ -935,15 +922,13 @@ void CAppSettings::SetPaneStatus(UINT uPaneID, bool fVisible, bool fActive)
 	}
 }
 
-auto CAppSettings::GetGeneralDefs()->const GENERALSETTINGS&
-{
+auto CAppSettings::GetGeneralDefs()->const GENERALSETTINGS& {
 	static const GENERALSETTINGS defs { .fMultipleInst { false }, .dwRFLSize { 20 }, .eOnStartup { EOnStartup::DO_NOTHING },
 		.stDAC { 0 }, .eDataIOMode { ut::EDataIOMode::DATA_MMAP }, .fWindowsMenu { false } };
 	return defs;
 }
 
-auto CAppSettings::GetHexCtrlDefs()->const HEXCTRLSETTINGS&
-{
+auto CAppSettings::GetHexCtrlDefs()->const HEXCTRLSETTINGS& {
 	static const HEXCTRLSETTINGS defs { .stLogFont { .lfHeight { -ut::FontPixelsFromPoints(11) },
 		.lfPitchAndFamily { FIXED_PITCH }, .lfFaceName { L"Consolas" } }, //HexCtrl default font.
 		.dwCapacity { 16UL }, .dwDateFormat { 0xFFFFFFFFUL }, .dwGroupSize { 1UL }, .dwPageSize { 0UL },
@@ -967,42 +952,35 @@ auto CAppSettings::GetPanesSettings()const->const PANESETTINGS& {
 	return m_stPaneSett;
 }
 
-auto CAppSettings::GetRegBasePath()const->const std::wstring&
-{
+auto CAppSettings::GetRegBasePath()const->const std::wstring& {
 	static const auto wstrBase = L"Software\\" + GetAppName();
 	return wstrBase;
 }
 
-auto CAppSettings::GetRegHexCtrlSettingsPath()const->const std::wstring&
-{
+auto CAppSettings::GetRegHexCtrlSettingsPath()const->const std::wstring& {
 	static const auto wstrHexCtrlSett = GetRegSettingsPath() + L"\\HexCtrl";
 	return wstrHexCtrlSett;
 }
 
-auto CAppSettings::GetRegSettingsPath()const->const std::wstring&
-{
+auto CAppSettings::GetRegSettingsPath()const->const std::wstring& {
 	static const auto wstrSettings = GetRegBasePath() + L"\\Settings";
 	return wstrSettings;
 }
 
-auto CAppSettings::GetSQLiteDB()const->sqlite3*
-{
+auto CAppSettings::GetSQLiteDB()const->sqlite3* {
 	return m_upSQLiteDB.get();
 }
 
-void CAppSettings::LoadHexCtrlTemplates()
-{
+void CAppSettings::LoadHexCtrlTemplates() {
 	auto wstrDir = ut::GetModuleDir();
 	wstrDir += L"\\Templates\\";
-	if (const std::filesystem::path pathTemplates { wstrDir }; std::filesystem::exists(pathTemplates)) {
-		for (const auto& entry : std::filesystem::directory_iterator { pathTemplates }) {
-			const std::wstring_view wsvFile = entry.path().c_str();
-			if (const auto npos = wsvFile.find_last_of(L'.'); npos != std::wstring_view::npos
-				&& wsvFile.substr(npos + 1) == L"json") { //Check json extension of templates.
-				if (auto p = HEXCTRL::IHexTemplates::LoadFromFile(wsvFile.data()); p != nullptr) {
-					m_vecHexCtrlTemplates.emplace_back(std::move(p));
-				}
-			}
+	const std::filesystem::path pathTemplates { wstrDir };
+	if (!std::filesystem::exists(pathTemplates))
+		return;
+
+	for (const auto& entry : std::filesystem::directory_iterator { pathTemplates }) {
+		if (const auto& path = entry.path(); path.extension() == L".json") { //Add all *.json files.
+			m_vecHexCtrlTemplFiles.emplace_back(path.c_str());
 		}
 	}
 }
@@ -1060,7 +1038,7 @@ void CAppSettings::DBCreateTables(sqlite3* pDB)
 
 	const auto sqlTemplAppliedCreate = L"CREATE TABLE IF NOT EXISTS TemplatesApplied ("
 		L"FileID       INTEGER NOT NULL,"
-		L"TemplateName TEXT NOT NULL,"
+		L"TemplateFile TEXT NOT NULL,"
 		L"Offset       INTEGER NOT NULL);";
 	res = sqlite3_prepare16_v2(pDB, sqlTemplAppliedCreate, -1, std::out_ptr(pSTMT), nullptr);
 	assert(res == SQLITE_OK);
@@ -1121,14 +1099,14 @@ auto CAppSettings::DBGetFileIDByName(sqlite3* pDB, std::wstring_view wsvFileName
 	return sqlite3_last_insert_rowid(pDB);
 }
 
-auto CAppSettings::DBLoadBkmForFileID(sqlite3* pDB, std::int64_t i64FileID)->VecBkm
+auto CAppSettings::DBLoadBkmForFileID(sqlite3* pDB, std::int64_t i64FileID)->VecHexBkm
 {
 	const auto sqlSelect = std::format(L"Select * FROM Bookmarks WHERE FileID = '{}'", i64FileID);
 	uptr_stmt pSTMT;
 	auto res = sqlite3_prepare16_v2(pDB, sqlSelect.data(), -1, std::out_ptr(pSTMT), nullptr);
 	assert(res == SQLITE_OK);
 
-	VecBkm vecBkm;
+	VecHexBkm vecBkm;
 	while (sqlite3_step(pSTMT.get()) == SQLITE_ROW) {
 		HEXCTRL::VecHexSpan vecSpan;
 		const std::wstring_view wsvVecSpan = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(pSTMT.get(), 1)); //VecHexSpan.
@@ -1172,18 +1150,18 @@ auto CAppSettings::DBLoadLastOpenFiles(sqlite3* pDB)->VecDataOpen
 	return vecDataOpen;
 }
 
-auto CAppSettings::DBLoadTemplApliedForFileID(sqlite3* pDB, std::int64_t i64FileID)->VecTemplApplied
+auto CAppSettings::DBLoadTemplApliedForFileID(sqlite3* pDB, std::int64_t i64FileID)->HEXCTRL::VecHexTemplatesApplied
 {
 	const auto sqlSelect = std::format(L"Select * FROM TemplatesApplied WHERE FileID = '{}'", i64FileID);
 	uptr_stmt pSTMT;
 	auto res = sqlite3_prepare16_v2(pDB, sqlSelect.data(), -1, std::out_ptr(pSTMT), nullptr);
 	assert(res == SQLITE_OK);
 
-	VecTemplApplied vecApplied;
+	HEXCTRL::VecHexTemplatesApplied vecApplied;
 	while (sqlite3_step(pSTMT.get()) == SQLITE_ROW) {
-		const auto pwszTemplName = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(pSTMT.get(), 1)); //Template name.
+		const auto pwszTemplFile = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(pSTMT.get(), 1)); //Template name.
 		const auto u64Offset = static_cast<std::uint64_t>(sqlite3_column_int64(pSTMT.get(), 2)); //Offset.
-		vecApplied.emplace_back(DBTEMPLAPPLIED { .ullOffset { u64Offset }, .wstrTemplateName { pwszTemplName } });
+		vecApplied.emplace_back(HEXCTRL::HEXTEMPLATEAPPLIED { .wstrFilePath { pwszTemplFile }, .u64Offset { u64Offset }, });
 	}
 
 	return vecApplied;
@@ -1260,7 +1238,7 @@ void CAppSettings::DBSaveLastOpenFiles(sqlite3* pDB, SpnDataOpen spnDataOpen)
 	}
 }
 
-void CAppSettings::DBSaveTemplAppliedForFileID(sqlite3* pDB, std::int64_t i64FileID, HEXCTRL::SpanHexTemplApplied spnApplied)
+void CAppSettings::DBSaveTemplAppliedForFileID(sqlite3* pDB, std::int64_t i64FileID, const HEXCTRL::VecHexTemplatesApplied& vecApplied)
 {
 	//Remove all existing records for given FileID.
 	const auto sqlDelete = std::format(L"DELETE FROM TemplatesApplied WHERE FileID = '{}'", i64FileID);
@@ -1270,9 +1248,9 @@ void CAppSettings::DBSaveTemplAppliedForFileID(sqlite3* pDB, std::int64_t i64Fil
 	res = sqlite3_step(pSTMT.get());
 	assert(res == SQLITE_DONE);
 
-	for (const auto& applied : spnApplied) {
-		const auto sqlInsert = std::format(L"INSERT INTO TemplatesApplied (FileID, TemplateName, Offset)"
-			L"VALUES ('{}','{}','{}');", i64FileID, applied.pTemplate->wstrName, applied.ullOffset);
+	for (const auto& applied : vecApplied) {
+		const auto sqlInsert = std::format(L"INSERT INTO TemplatesApplied (FileID, TemplateFile, Offset)"
+			L"VALUES ('{}','{}','{}');", i64FileID, applied.wstrFilePath, applied.u64Offset);
 		res = sqlite3_prepare16_v2(pDB, sqlInsert.data(), -1, std::out_ptr(pSTMT), nullptr);
 		assert(res == SQLITE_OK);
 		res = sqlite3_step(pSTMT.get());
